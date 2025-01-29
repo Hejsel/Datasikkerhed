@@ -15,4 +15,4 @@ function runCaesarCipher(key, cleartext) {
 // Eksekvering af programmet
 runCaesarCipher(7, 'Hej med dig.');
 
-// Med denne kode kan vi oprette nye variabler med andre alfabeter og benytte dem i funktionskaldene.
+// Med denne kode kan vi oprette nye konstanter med andre alfabeter og benytte dem i funktionskaldene.
