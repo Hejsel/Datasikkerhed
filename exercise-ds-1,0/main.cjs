@@ -14,7 +14,7 @@ function caesarE(key, cleartext) {
 			const newindex = (index + key) % alfabetDK.length;
 
 			result += alfabetDK.charAt(newindex);
-			/*
+
 			console.log(
 				'Nøglens shift-værdig er sat til',
 				key + '.',
@@ -28,9 +28,8 @@ function caesarE(key, cleartext) {
 				alfabetDK.charAt(newindex) + '. Hvilket vil sige, at vi nu har krypteret',
 				cleartext[i],
 				'til at være',
-				alfabetDK.charAt(newindex) + '.'	
+				alfabetDK.charAt(newindex) + '.'
 			);
-			*/
 		} else {
 			result += cleartext[i];
 		}
