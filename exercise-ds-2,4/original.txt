@@ -1,0 +1,2 @@
+Exercise DS.2.4
+Create a short document, and detached sign it into SecE4.det.sig.txt. The document should give a possible use case for detached signatures.
