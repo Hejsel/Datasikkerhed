@@ -1,78 +1,102 @@
 'use strict';
-const readlineSync = require('readline-sync'); // enable reads from the terminal (Kan bruges til vis du vil benytte dig af noget UI)
+const readlineSync = require('readline-sync');
+const Rockyou = require('./module/rockyou.js');
 const sqlite3 = require('sqlite3').verbose();
-const Rock = require('./module/rockyou.js'); // require Rockyou Singleton
+const bcrypt = require('bcrypt');
 
-/*
-    The program must get the rockyou.txt as a CLI parameter.
-    This way you do not have to include it in the hand in. 
-    I can use my own.
-    
-    1. Get filename
-    2. Populate the singleton occurrence of rockyou. See above
-    3. Ask user to enter password
-    4. Verify whether good or bad
-    5. Write the result re the given requests
-*/
+async function getNewUserInfo(userid, password) {
+	Rockyou.getRockyou();
+	do {
+		userid = readlineSync.question('Indtast dit brugernavn: ');
 
-// Læs rockyou.txt
-Rock.getRockyou();
-
-// Hent hele listen af dårlige passwords
-const rockyouPasswords = Rock.rockyou.split('\n');
-
-// Funktion til at kontrollere password
-const erPasswordGodt = (password) => {
-	return !rockyouPasswords.includes(password); // Returnerer true, hvis password ikke er i listen
-};
-
-// Funktion til at gemme brugerdata i databasen
-const gemBrugerData = (userid, password) => {
-	// Opret eller åbne SQLite database
-	const db = new sqlite3.Database('./exercise-ds-3,0.db', (err) => {
-		if (err) {
-			console.error('Kunne ikke åbne database:', err.message);
-			return;
-		}
-		console.log('Forbundet til SQLite-databasen.');
-	});
-
-	// Opret tabellen, hvis den ikke findes
-	db.run(`CREATE TABLE IF NOT EXISTS users (userid TEXT, password TEXT)`, (err) => {
-		if (err) {
-			console.error('Fejl ved oprettelse af tabel:', err.message);
-			return;
-		}
-	});
-
-	// Indsæt brugerdata i tabellen
-	const sql = 'INSERT INTO users (userid, password) VALUES (?, ?)';
-	db.run(sql, [userid, password], (err) => {
-		if (err) {
-			console.error('Fejl ved indsættelse af data:', err.message);
+		if (!userid.trim()) {
+			console.log('❌ Brugernavnet må ikke være tomt!');
+		} else if (userid.includes(' ')) {
+			console.log('❌ Brugernavnet må ikke indeholde mellemrum!');
+			userid = '';
 		} else {
-			console.log(`Brugerdata for ${userid} gemt! ID: ${this.lastID}`);
+			const db = new sqlite3.Database('./exercise-ds-3,0.db', (err) => {
+				if (err) {
+					console.error('❌ Kunne ikke åbne database');
+				}
+			});
+			const sql = 'SELECT COUNT(*) AS count FROM user WHERE userid = ?';
+			try {
+				const row = await new Promise((resolve, reject) => {
+					db.get(sql, [userid], (err, row) => {
+						if (err) {
+							reject('❌ Fejl ved at tjekke bruger: ' + err.message);
+						} else {
+							resolve(row);
+						}
+					});
+				});
+				if (row.count > 0) {
+					console.log('❌ Brugernavnet er allerede taget. Prøv et andet.');
+					userid = '';
+				}
+			} catch (err) {
+				console.error(err);
+			} finally {
+				db.close();
+			}
 		}
-	});
+	} while (!userid.trim() || userid.includes(' '));
 
-	// Luk forbindelsen til databasen
-	db.close((err) => {
-		if (err) {
-			console.error('Fejl ved lukning af database:', err.message);
-		} else {
-			console.log('Forbindelsen til databasen er lukket.');
+	do {
+		password = readlineSync.question('Indtast dit password: ');
+
+		if (!password.trim()) {
+			console.log('❌ Passwordet må ikke være tomt!');
+		} else if (password.includes(' ')) {
+			console.log('❌ Passwordet må ikke indeholde mellemrum!');
+			password = '';
+		} else if (!passwordStrengthChecker(password)) {
+			console.log('❌ Dette password er for svagt, prøv et andet.');
+			password = '';
 		}
-	});
-};
+	} while (!password.trim() || password.includes(' ') || !passwordStrengthChecker(password));
 
-// Hent input fra brugeren
-const userid = readlineSync.question('Indtast dit userid: ');
-const password = readlineSync.question('Indtast dit password: ');
+	console.log(`✅ Hej ${userid}, du valgte et godt password!`);
+	await saveUserData(userid, password);
+	return { userid, password };
+}
 
-// Kontroller om password er godt nok
-if (erPasswordGodt(password)) {
-	console.log('Du valgte klogt!');
-	gemBrugerData(userid, password); // Gem brugerdata i databasen
-} else {
-	console.log('Ikke godt nok, prøv igen');
+function passwordStrengthChecker(password) {
+	const rockyouPasswords = Rockyou.rockyou.split('\n');
+	return !rockyouPasswords.includes(password);
+}
+
+getNewUserInfo();
+
+async function saveUserData(userid, password) {
+	try {
+		userid.replace(/\s/g, '');
+		password.replace(/\s/g, '');
+
+		const hashedPassword = await bcrypt.hash(password, 10);
+		const db = new sqlite3.Database('./exercise-ds-3,0.db', (err) => {
+			if (err) {
+				throw new Error('❌ Kunne ikke åbne database');
+			}
+		});
+		const sql = 'INSERT INTO user (userid, password) VALUES (?, ?)';
+		await new Promise((resolve, reject) => {
+			db.run(sql, [userid, hashedPassword], (err) => {
+				if (err) {
+					reject('❌ Fejl ved indsættelse af data: ' + err.message);
+				} else {
+					resolve();
+				}
+			});
+		});
+		console.log(`✅ Brugerdata for ${userid} er nu gemt i databasen!`);
+		db.close((err) => {
+			if (err) {
+				console.error('❌ Fejl ved lukning af database:', err.message);
+			}
+		});
+	} catch (error) {
+		console.error('❌ Der opstod en fejl:', error);
+	}
 }
