@@ -2,7 +2,7 @@
 const readlineSync = require('readline-sync');
 const Rockyou = require('./module/rockyou.js');
 const sqlite3 = require('sqlite3').verbose();
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 async function getNewUserInfo(userid, password) {
 	Rockyou.getRockyou();

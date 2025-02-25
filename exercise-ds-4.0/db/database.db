@@ -1,0 +1,6 @@
+-- SQL til at oprette brugertabel
+CREATE TABLE IF NOT EXISTS user (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  userid TEXT NOT NULL UNIQUE,
+  password TEXT NOT NULL
+);
