@@ -12,6 +12,19 @@ const connect = async function () {
 };
 
 module.exports = {
+
+	insertRegister: async function (req, res, next) {
+		try {
+			let db = await connect();
+			let sql = 'INSERT INTO user (email, password, bio) VALUES(?, ?, ?)'; // sikret for sql injection.
+			let query = db.prepare(sql);
+			let rc = await query.run(req.body.email, req.body.password, req.body.bio); // mangler noget her.
+			return rc;
+		} catch (err) {
+			res.status(400).json(err.message);
+		}
+	},
+
 	getAllContinents: async function (req, res, next) {
 		try {
 			let db = await connect();

@@ -4,16 +4,16 @@ const router = express.Router();
 const con = require('../controllers/controllers');
 
 /* GET user register ie send form */
-router.get('/register', function(req, res, next) {
+router.get('/register',/*middleware skal placeres her*/ function(req, res, next) {
   	res.render('register', {
 	  	title: 'Please Register',
 	  	subtitle: 'Follow the embedded cues'
   	});
 });
 
-router.post('/register', function(req, res, next) {
+router.post('/register', con.postRegister, function(req, res, next) {
 	// variables from middleware
-	res.json({login: 'failed, please try again'});
+	res.json({login: '✅ Succes du har nu oprettet en bruger.'});
 });
 
 router.get('/login', function(req, res, next) {
