@@ -1,6 +1,17 @@
 const models = require('../models/dbhandlers');
 
 module.exports = {
+
+	postCity: async function(req, res, next) {
+		try {
+			await models.insertCity(req, res, next);
+			next();
+		} catch (err) {
+			console.log(err);
+			return res.status(500).json({message: err.message});
+		}
+	},
+
 	getContinents: async function (req, res, next) {
 		let rows = await models.getAllContinents(req, res, next);
 		res.locals.continents = rows;
